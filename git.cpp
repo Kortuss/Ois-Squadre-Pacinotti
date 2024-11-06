@@ -1,79 +1,91 @@
 #include <bits/stdc++.h>
 using namespace std;
 std::map<string, bool> visited;
-std::map<string, vector<string>> adj;
-std::map<string, bool> adjEdit;
+std::map<int, vector<int>> adj;
+std::map<int, bool> adjEdit;
 vector<string> Output;
-string dfs(string i) {
-    bool k;
-    if (adjEdit.find(i) == adjEdit.end())
-        k = true;
-    else 
-        k = adjEdit[i];
-    string localOut = "";
-    for (auto u : adj[i]) {
-        string a = dfs(u);
-        localOut += a;
-        if (a == "")
-            k = false;
-    }
-    //cout << k << " " << i << endl;
-    if (k)
-        return i;
-    cout << localOut;
-    return "";
-}
-vector<string> tokenize (string in){
-    
-    vector<string> tokens;
-    string word;
-    for (int i = 1; i < in.length(); i++)
-    {
-        char a = in[i];
-        if (a == '/' || i == in.length() - 1)
-        {
-            tokens.push_back(word);
-            word = "";
+vector <string> TokenList;
+string dfs(int i,string history) {
+	bool k;
+	if (adjEdit.find(i) == adjEdit.end())
+		k = true;
+	else
+		k = adjEdit[i];
+	vector<string> localOut;
+	history = history + TokenList[i] + '/';
+	if (i == 0)
+	    history = "/";
+	for (auto u : adj[i]) {
+		string a = dfs(u,history);
+		if (a == ""){
+		    k = false;
             continue;
-        }
-        word = word + a;
-    }
-    return tokens;
-    
+		}
+		localOut.push_back(a);
+	}
+	if (k){
+	    if (history == "/")
+	        return history;
+	    history.pop_back();
+	    return history;
+	}
+	if (localOut.empty())
+	    return "";
+	for (auto u:localOut) cout << u << endl;
+	return "";
+}
+pair<int,int> tokenize (string in) {
+
+	int start = TokenList.size();
+	string word;
+	for (int i = 1; i < in.length(); i++)
+	{
+		char a = in[i];
+		if (i == in.length() - 1)
+		{
+			TokenList.push_back(word + a);
+			continue;
+		}
+		if (a == '/')
+		{
+			TokenList.push_back(word);
+			word = "";
+			continue;
+		}
+		word = word + a;
+	}
+	return {TokenList.size() - 1,start};
 }
 
 int main()
 {
-    int N;
-    cin >> N;
-    //std::map<string, int> mappa;
-    //std::vector<vector<int>> adj;
-    std::map<string, bool> adjTruth;
-
-    for (int i = 0; i < N; i++){
-        bool edited;
-        cin >> edited;
-        string in; 
-        cin >> in;
-        vector<string> Tokens(tokenize(in));
-        std::reverse(Tokens.begin(), Tokens.end());
-        string prec = Tokens[0];
-        cout << Tokens[0] << endl;
-        adjEdit[Tokens[0]] = edited;
-        for (int i = 1; i < Tokens.size(); i++)
-        {
-            if (adjTruth[prec])
-                continue;
-            adj[Tokens[i]].push_back(prec);
-            adjTruth[prec] = true;
-            prec = Tokens[i];
-        }
-        if (adjTruth[prec])
-            continue;
-        adjTruth[prec] = true;
-        adj["/"].push_back(prec);
-    }
-    cout << dfs("/");
-
-    return 0;
+	int N;
+	cin >> N;
+	std::map<int, bool> adjTruth;
+    TokenList.push_back("/");
+	for (int i = 0; i < N; i++) {
+		bool edited;
+		cin >> edited;
+		string in;
+		cin >> in;
+		int prec, start;
+	    pair<int,int> temp = tokenize(in);
+	    prec = temp.first;
+	    start = temp.second;
+		adjEdit[prec] = edited;
+		for (int i = prec - 1; i >= start; i--)
+		{
+			if (adjTruth[prec])
+				continue;
+			adj[i].push_back(prec);
+			adjTruth[prec] = true;
+			prec = i--;
+		}
+		if (adjTruth[prec])
+			continue;
+		adjTruth[prec] = true;
+		adj[0].push_back(prec);
+	}
+    cout << dfs(0,"");
+	return 0;
 }
